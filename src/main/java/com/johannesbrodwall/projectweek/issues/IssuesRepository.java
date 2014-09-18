@@ -33,6 +33,13 @@ public class IssuesRepository implements Repository<Issue> {
            return null;
         });
 
+        Database.executeQuery("SELECT * FROM Issue_Worklogs", (rs) -> {
+            Issue issue = result.get(rs.getInt("issue_id"));
+            issue.addWorklog(rs.getTimestamp("work_started_at").toInstant(),
+                    rs.getString("worker"), rs.getInt("seconds_worked"));
+            return null;
+        });
+
         return result.values();
     }
 
@@ -46,6 +53,11 @@ public class IssuesRepository implements Repository<Issue> {
         for (IssueStatus status : issue.getStatusChanges()) {
             Database.executeOperation("INSERT INTO Issue_Status (issue_id, created_at, status) VALUES (?, ?, ?)",
                     issue.getId(), status.getCreatedAt(), status.getStatus());
+        }
+
+        for (Worklog worklog : issue.getWorklogs()) {
+            Database.executeOperation("INSERT INTO Issue_Worklogs (issue_id, work_started_at, worker, seconds_worked) values (?, ?, ?, ?)",
+                    issue.getId(), worklog.getWorkStarted(), worklog.getAuthor(), worklog.getSecondsWorked());
         }
     }
 }

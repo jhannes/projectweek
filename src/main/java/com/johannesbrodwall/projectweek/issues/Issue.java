@@ -16,14 +16,21 @@ public class Issue {
 
     @Getter
     private final String key, projectKey;
-    private List<IssueStatus> statusChanges = new ArrayList<IssueStatus>();
 
-    public List<IssueStatus> getStatusChanges() {
-        return statusChanges;
-    }
+    @Getter
+    private List<IssueStatus> statusChanges = new ArrayList<>();
+
+    @Getter
+    private List<Worklog> worklogs = new ArrayList<>();
+
 
     public void addStatus(Instant createdAt, String status) {
         statusChanges.add(new IssueStatus(createdAt, status));
+    }
+
+
+    public void addWorklog(Instant workStarted, String author, int secondsWorked) {
+        worklogs.add(new Worklog(workStarted, secondsWorked, author));
     }
 
 

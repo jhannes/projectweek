@@ -32,6 +32,10 @@ public class IssuesLoaderTest {
         assertThat(issues.iterator().next().getStatusChanges()).extracting("status")
             .isNotEmpty()
             .doesNotContain(new Object[] { null });
+
+        Worklog someWorklog = issues.iterator().next().getWorklogs().iterator().next();
+        assertThat(someWorklog.getHours()).isPositive();
+        assertThat(someWorklog.getAuthor()).isNotEmpty();
     }
 
 }
