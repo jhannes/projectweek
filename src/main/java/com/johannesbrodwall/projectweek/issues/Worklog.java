@@ -2,10 +2,14 @@ package com.johannesbrodwall.projectweek.issues;
 
 import java.time.Instant;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @RequiredArgsConstructor
+@ToString
+@EqualsAndHashCode
 public class Worklog {
 
     @Getter

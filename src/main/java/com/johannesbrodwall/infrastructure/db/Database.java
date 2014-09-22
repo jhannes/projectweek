@@ -91,13 +91,42 @@ public class Database {
         }
     }
 
-    public static <T> List<T> executeQuery(String query, ResultSetTransformer<T> transformer) throws SQLException {
-        try (Statement stmt = Database.getConnection().createStatement()) {
-            try ( ResultSet rs = stmt.executeQuery(query) ) {
+    public static <T> List<T> queryForList(String query, ResultSetTransformer<T> transformer, Object... parameters) throws SQLException {
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
+            for (int i = 0; i < parameters.length; i++) {
+                if (parameters[i] instanceof Instant) {
+                    Instant instant = (Instant)parameters[i];
+                    stmt.setTimestamp(i+1, new Timestamp(instant.toEpochMilli()));
+                } else {
+                    stmt.setObject(i+1, parameters[i]);
+                }
+            }
+            try ( ResultSet rs = stmt.executeQuery() ) {
                 return transformResultSet(transformer, rs);
             }
         }
+    }
 
+    public static <T> T queryForSingle(String query, ResultSetTransformer<T> transformer, Object... parameters) throws SQLException {
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
+            for (int i = 0; i < parameters.length; i++) {
+                if (parameters[i] instanceof Instant) {
+                    Instant instant = (Instant)parameters[i];
+                    stmt.setTimestamp(i+1, new Timestamp(instant.toEpochMilli()));
+                } else {
+                    stmt.setObject(i+1, parameters[i]);
+                }
+            }
+            try ( ResultSet rs = stmt.executeQuery() ) {
+                if (!rs.next()) return null;
+
+                T result = transformer.execute(rs);
+                if (rs.next()) {
+                    throw new IllegalStateException("More than one result " + query);
+                }
+                return result;
+            }
+        }
     }
 
     private static <T> List<T> transformResultSet(ResultSetTransformer<T> transformer, ResultSet rs) throws SQLException {

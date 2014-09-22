@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Base64;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +31,15 @@ public class JiraClient {
         String username = ProjectweekAppConfig.getJiraUsername(configurationName);
         String password = ProjectweekAppConfig.getJiraPassword(configurationName);
 
+        if (url.getProtocol().equals("file") && serviceUrl.contains("?")) {
+            // For testing with file URLs (!)
+            url = new URL(ProjectweekAppConfig.getJiraHost(configurationName) +
+                    serviceUrl.substring(0, serviceUrl.indexOf('?')));
+        }
         log.info("Fetching " + url);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setInstanceFollowRedirects(true);
+
+        URLConnection connection = url.openConnection();
+        HttpURLConnection.setFollowRedirects(true);
         String authorization = username + ":" + password;
         connection.setRequestProperty("Authorization",
                 "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes()));
