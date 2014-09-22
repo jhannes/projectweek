@@ -70,14 +70,7 @@ public class Database {
 
     public static void executeOperation(String query, Object... parameters) throws SQLException {
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
-            for (int i = 0; i < parameters.length; i++) {
-                if (parameters[i] instanceof Instant) {
-                    Instant instant = (Instant)parameters[i];
-                    stmt.setTimestamp(i+1, new Timestamp(instant.toEpochMilli()));
-                } else {
-                    stmt.setObject(i+1, parameters[i]);
-                }
-            }
+            setParameters(stmt, parameters);
             stmt.executeUpdate();
         }
     }
@@ -93,30 +86,27 @@ public class Database {
 
     public static <T> List<T> queryForList(String query, ResultSetTransformer<T> transformer, Object... parameters) throws SQLException {
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
-            for (int i = 0; i < parameters.length; i++) {
-                if (parameters[i] instanceof Instant) {
-                    Instant instant = (Instant)parameters[i];
-                    stmt.setTimestamp(i+1, new Timestamp(instant.toEpochMilli()));
-                } else {
-                    stmt.setObject(i+1, parameters[i]);
-                }
-            }
+            setParameters(stmt, parameters);
             try ( ResultSet rs = stmt.executeQuery() ) {
                 return transformResultSet(transformer, rs);
             }
         }
     }
 
-    public static <T> T queryForSingle(String query, ResultSetTransformer<T> transformer, Object... parameters) throws SQLException {
+    public static void query(String query, ResultSetOperation operation, Object... parameters) throws SQLException {
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
-            for (int i = 0; i < parameters.length; i++) {
-                if (parameters[i] instanceof Instant) {
-                    Instant instant = (Instant)parameters[i];
-                    stmt.setTimestamp(i+1, new Timestamp(instant.toEpochMilli()));
-                } else {
-                    stmt.setObject(i+1, parameters[i]);
+            setParameters(stmt, parameters);
+            try ( ResultSet rs = stmt.executeQuery() ) {
+                while (rs.next()) {
+                    operation.execute(rs);
                 }
             }
+        }
+    }
+
+    public static <T> T queryForSingle(String query, ResultSetTransformer<T> transformer, Object... parameters) throws SQLException {
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
+            setParameters(stmt, parameters);
             try ( ResultSet rs = stmt.executeQuery() ) {
                 if (!rs.next()) return null;
 
@@ -125,6 +115,18 @@ public class Database {
                     throw new IllegalStateException("More than one result " + query);
                 }
                 return result;
+            }
+        }
+    }
+
+    private static void setParameters(PreparedStatement stmt, Object... parameters)
+            throws SQLException {
+        for (int i = 0; i < parameters.length; i++) {
+            if (parameters[i] instanceof Instant) {
+                Instant instant = (Instant)parameters[i];
+                stmt.setTimestamp(i+1, new Timestamp(instant.toEpochMilli()));
+            } else {
+                stmt.setObject(i+1, parameters[i]);
             }
         }
     }

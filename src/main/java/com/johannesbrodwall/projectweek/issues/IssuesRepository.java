@@ -23,25 +23,22 @@ public class IssuesRepository implements Repository<Issue> {
     @SneakyThrows
     public Collection<Issue> findAll() {
         SortedMap<Integer, Issue> result = new TreeMap<>();
-        Database.queryForList("SELECT * FROM Issues ORDER BY key", (rs) -> {
+        Database.query("SELECT * FROM Issues ORDER BY key", (rs) -> {
             Issue issue = new Issue(rs.getString("key"), rs.getString("project_key"));
             issue.setId(rs.getInt("id"));
             result.put(rs.getInt("id"), issue);
-            return null;
         });
 
-        Database.queryForList("SELECT * FROM Issue_Status", (rs) -> {
+        Database.query("SELECT * FROM Issue_Status", (rs) -> {
            Issue issue = result.get(rs.getInt("issue_id"));
            issue.addStatus(rs.getTimestamp("created_at").toInstant(),
                    rs.getString("status"));
-           return null;
         });
 
-        Database.queryForList("SELECT * FROM Issue_Worklogs", (rs) -> {
+        Database.query("SELECT * FROM Issue_Worklogs", (rs) -> {
             Issue issue = result.get(rs.getInt("issue_id"));
             issue.addWorklog(rs.getTimestamp("work_started_at").toInstant(),
                     rs.getString("worker"), rs.getInt("seconds_worked"));
-            return null;
         });
 
         return result.values();
@@ -93,16 +90,14 @@ public class IssuesRepository implements Repository<Issue> {
                 return result;
             }, query.getParameters());
 
-        Database.queryForList("SELECT * FROM Issue_Status WHERE Issue_id = ?", (rs) -> {
+        Database.query("SELECT * FROM Issue_Status WHERE Issue_id = ?", (rs) -> {
             issue.addStatus(rs.getTimestamp("created_at").toInstant(),
                     rs.getString("status"));
-            return null;
          }, issue.getId());
 
-         Database.queryForList("SELECT * FROM Issue_Worklogs WHERE Issue_id = ?", (rs) -> {
+         Database.query("SELECT * FROM Issue_Worklogs WHERE Issue_id = ?", (rs) -> {
              issue.addWorklog(rs.getTimestamp("work_started_at").toInstant(),
                      rs.getString("worker"), rs.getInt("seconds_worked"));
-             return null;
          }, issue.getId());
 
         return issue;
