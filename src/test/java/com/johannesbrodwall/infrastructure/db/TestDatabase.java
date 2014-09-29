@@ -12,9 +12,9 @@ public class TestDatabase extends Database {
         SLF4JBridgeHandler.install();
 
         dataSource.setJdbcUrl(ProjectweekAppConfig.getProperty("projectweek.test.db.url", "jdbc:postgresql://localhost:5432/projectweek_test"));
-        dataSource.setUser(ProjectweekAppConfig.getProperty("projectweek.test.db..username", "projectweek_test"));
+        dataSource.setUser(ProjectweekAppConfig.getProperty("projectweek.test.db.username", "projectweek_test"));
         dataSource.setPassword(ProjectweekAppConfig.getProperty("projectweek.test.db.password", "projectweek_test"));
-        dataSource.setDriverClass(ProjectweekAppConfig.getProperty("projectweek.test.db..driverClassName", "org.postgresql.Driver"));
+        dataSource.setDriverClass(ProjectweekAppConfig.getProperty("projectweek.test.db.driverClassName", "org.postgresql.Driver"));
 
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
