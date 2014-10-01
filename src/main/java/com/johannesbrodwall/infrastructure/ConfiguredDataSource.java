@@ -14,8 +14,6 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
-import lombok.SneakyThrows;
-
 class ConfiguredDataSource implements DataSource {
 
     private DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -37,26 +35,32 @@ class ConfiguredDataSource implements DataSource {
         return getDataSource().getConnection();
     }
 
-    @SneakyThrows
     private DriverManagerDataSource getDataSource() {
         updateProperties();
         return dataSource;
     }
 
-    private void updateProperties() throws URISyntaxException {
+    private void updateProperties() {
         String databaseUrl = System.getenv("DATABASE_URL");
         if (databaseUrl != null) {
-            URI dbUri = new URI(databaseUrl);
+            URI dbUri = getDatabaseUri(databaseUrl);
             dataSource.setUser(dbUri.getUserInfo().split(":")[0]);
             dataSource.setPassword(dbUri.getUserInfo().split(":")[1]);
             dataSource.setJdbcUrl(getJdbcUrlFromDbUrl(dbUri));
             dataSource.setDriverClass(getJdbcDriverFromDbUrl(dbUri));
         } else {
             dataSource.setUser(config.getRequiredProperty(propertyPrefix + ".db.username"));
-            dataSource.setPassword(config.getProperty(propertyPrefix + ".db.password",
-                    dataSource.getUser()));
+            dataSource.setPassword(config.getProperty(propertyPrefix + ".db.password", dataSource.getUser()));
             dataSource.setJdbcUrl(config.getRequiredProperty(propertyPrefix + ".db.url"));
             dataSource.setDriverClass(config.getRequiredProperty(propertyPrefix + ".db.driverClassName"));
+        }
+    }
+
+    private URI getDatabaseUri(String databaseUrl) {
+        try {
+            return new URI(databaseUrl);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid database URL " + databaseUrl);
         }
     }
 

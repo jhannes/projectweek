@@ -1,6 +1,5 @@
 package com.johannesbrodwall.projectweek;
 
-
 import com.johannesbrodwall.infrastructure.AppConfiguration;
 
 import java.util.Arrays;

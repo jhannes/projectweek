@@ -1,5 +1,8 @@
 package com.johannesbrodwall.infrastructure;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,21 +10,18 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+public abstract class AppConfiguration {
 
-@Slf4j
-public class AppConfiguration {
+    private static Logger log = LoggerFactory.getLogger(AppConfiguration.class);
 
     private long nextCheckTime = 0;
     private long lastLoadTime = 0;
     private Properties properties = new Properties();
-    private Properties defaultProperties = new Properties();
     private final File configFile;
-    protected final String propertyPrefix;
+    private final String propertyPrefix;
     private DataSource dataSource;
 
-    public AppConfiguration(String filename, String propertyPrefix) {
+    protected AppConfiguration(String filename, String propertyPrefix) {
         this.configFile = new File(filename);
         this.propertyPrefix = propertyPrefix;
         dataSource = new ConfiguredDataSource(this, propertyPrefix);
@@ -45,12 +45,17 @@ public class AppConfiguration {
     }
 
     private String getProperty(String propertyName) {
+        if (System.getProperty(propertyName) != null) {
+            log.trace("Reading {} from system properties", propertyName);
+            return System.getProperty(propertyName);
+        }
         if (System.getenv(propertyName.replace('.', '_')) != null) {
+            log.trace("Reading {} from environment", propertyName);
             return System.getenv(propertyName.replace('.', '_'));
         }
 
         ensureConfigurationIsFresh();
-        return properties.getProperty(propertyName, defaultProperties.getProperty(propertyName));
+        return properties.getProperty(propertyName);
     }
 
     private synchronized void ensureConfigurationIsFresh() {
@@ -74,7 +79,6 @@ public class AppConfiguration {
         }
     }
 
-    @SneakyThrows
     public DataSource getDataSource() {
         return dataSource;
     }
