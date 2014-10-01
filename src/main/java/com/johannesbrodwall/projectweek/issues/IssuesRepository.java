@@ -30,15 +30,19 @@ public class IssuesRepository implements Repository<Issue> {
         });
 
         Database.query("SELECT * FROM Issue_Status", (rs) -> {
-           Issue issue = result.get(rs.getInt("issue_id"));
-           issue.addStatus(rs.getTimestamp("created_at").toInstant(),
-                   rs.getString("status"));
+            Issue issue = result.get(rs.getInt("issue_id"));
+            if (issue != null) {
+                issue.addStatus(rs.getTimestamp("created_at").toInstant(),
+                       rs.getString("status"));
+            }
         });
 
         Database.query("SELECT * FROM Issue_Worklogs", (rs) -> {
             Issue issue = result.get(rs.getInt("issue_id"));
-            issue.addWorklog(rs.getTimestamp("work_started_at").toInstant(),
-                    rs.getString("worker"), rs.getInt("seconds_worked"));
+            if (issue != null) {
+                issue.addWorklog(rs.getTimestamp("work_started_at").toInstant(),
+                        rs.getString("worker"), rs.getInt("seconds_worked"));
+            }
         });
 
         return result.values();
