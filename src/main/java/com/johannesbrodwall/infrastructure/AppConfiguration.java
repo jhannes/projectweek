@@ -2,10 +2,12 @@ package com.johannesbrodwall.infrastructure;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
+import javax.sql.DataSource;
+
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -16,19 +18,19 @@ public class AppConfiguration {
     private Properties properties = new Properties();
     private Properties defaultProperties = new Properties();
     private final File configFile;
+    protected final String propertyPrefix;
+    private DataSource dataSource;
 
-    public AppConfiguration(String filename) {
+    public AppConfiguration(String filename, String propertyPrefix) {
         this.configFile = new File(filename);
-    }
-
-    public void setDefault(String key, String value) {
-        defaultProperties.setProperty(key, value);
+        this.propertyPrefix = propertyPrefix;
+        dataSource = new ConfiguredDataSource(this, propertyPrefix);
     }
 
     public String getProperty(String propertyName, String defaultValue) {
         String result = getProperty(propertyName);
         if (result == null) {
-            log.debug("Missing property {} in {}", propertyName, properties.keySet());
+            log.trace("Missing property {} in {}", propertyName, properties.keySet());
             return defaultValue;
         }
         return result;
@@ -56,6 +58,10 @@ public class AppConfiguration {
         nextCheckTime = System.currentTimeMillis() + 10000;
         log.trace("Rechecking {}", configFile);
 
+        if (!configFile.exists()) {
+            log.error("Missing configuration file {}", configFile);
+        }
+
         if (lastLoadTime >= configFile.lastModified()) return;
         lastLoadTime = configFile.lastModified();
         log.debug("Reloading {}", configFile);
@@ -63,14 +69,29 @@ public class AppConfiguration {
         try (FileInputStream inputStream = new FileInputStream(configFile)) {
             properties.clear();
             properties.load(inputStream);
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException("Failed to load " + configFile, e);
         }
     }
 
+    @SneakyThrows
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public int getHttpPort(int defaultPort) {
+        if (System.getenv("PORT") != null) {
+            return Integer.parseInt(System.getenv("PORT"));
+        }
+        return getIntProperty(propertyPrefix + ".http.port", defaultPort);
+    }
+
+    public boolean getFlag(String property, boolean defaultValue) {
+        return Boolean.parseBoolean(getProperty(property, String.valueOf(defaultValue)));
+    }
+
+    public int getIntProperty(String propertyName, int defaultValue) {
+        return Integer.parseInt(getProperty(propertyName, String.valueOf(defaultValue)));
+    }
 
 }

@@ -15,14 +15,14 @@ import java.util.Collection;
 public class IssuesLoaderTest {
 
     private IssuesRepository repository = new IssuesRepository();
-    private Database database = new TestDatabase();
+    private Database database = TestDatabase.instance();
     private JiraIssuesLoader loader = new JiraIssuesLoader("test");
 
     @Test
     public void shouldLoadAllProjectsFromJira() throws IOException {
         database.executeInTransaction(() -> repository.deleteAll());
 
-        String project = ProjectweekAppConfig.getProjects().get(0);
+        String project = ProjectweekAppConfig.instance().getProjects().get(0);
         database.executeInTransaction(() -> loader.load(project));
 
         Collection<Issue> issues = database.executeInTransaction(() -> repository.findAll());
@@ -43,7 +43,7 @@ public class IssuesLoaderTest {
     public void shouldOnlyLoadProjectOnce() throws IOException {
         database.executeInTransaction(() -> repository.deleteAll());
 
-        String project = ProjectweekAppConfig.getProjects().get(0);
+        String project = ProjectweekAppConfig.instance().getProjects().get(0);
         database.executeInTransaction(() -> loader.load(project));
         Collection<Issue> issues = database.executeInTransaction(() -> repository.findAll());
         Issue firstIssue = issues.iterator().next();

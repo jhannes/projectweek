@@ -7,19 +7,23 @@ import com.johannesbrodwall.projectweek.ProjectweekAppConfig;
 
 public class TestDatabase extends Database {
 
-    public TestDatabase() {
+    private static TestDatabase instance = new TestDatabase();
+
+    public static TestDatabase instance() {
+        return instance;
+    }
+
+    private TestDatabase() {
+        super(ProjectweekAppConfig.instance());
+
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
-        dataSource.setJdbcUrl(ProjectweekAppConfig.getProperty("projectweek.test.db.url", "jdbc:postgresql://localhost:5432/projectweek_test"));
-        dataSource.setUser(ProjectweekAppConfig.getProperty("projectweek.test.db.username", "projectweek_test"));
-        dataSource.setPassword(ProjectweekAppConfig.getProperty("projectweek.test.db.password", "projectweek_test"));
-        dataSource.setDriverClass(ProjectweekAppConfig.getProperty("projectweek.test.db.driverClassName", "org.postgresql.Driver"));
-
         Flyway flyway = new Flyway();
-        flyway.setDataSource(dataSource);
-        flyway.clean();
+        flyway.setDataSource(config.getDataSource());
+        if (config.getFlag("test.clean-db", false)) {
+            flyway.clean();
+        }
         flyway.migrate();
-
     }
 }

@@ -1,7 +1,7 @@
 package com.johannesbrodwall.infrastructure.db;
 
 
-import com.mchange.v2.c3p0.DriverManagerDataSource;
+import com.johannesbrodwall.projectweek.ProjectweekAppConfig;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -18,9 +18,13 @@ import lombok.SneakyThrows;
 
 public class Database {
 
-    protected DriverManagerDataSource dataSource = new DriverManagerDataSource();
-
     private static ThreadLocal<Connection> currentConnection = new ThreadLocal<Connection>();
+
+    protected final ProjectweekAppConfig config;
+
+    public Database(ProjectweekAppConfig config) {
+        this.config = config;
+    }
 
     private static Connection getConnection() {
         return currentConnection.get();
@@ -40,7 +44,7 @@ public class Database {
     }
 
     private Transaction beginTransaction() throws SQLException {
-        currentConnection.set(dataSource.getConnection());
+        currentConnection.set(config.getDataSource().getConnection());
         currentConnection.get().setAutoCommit(false);
         return new Transaction() {
 

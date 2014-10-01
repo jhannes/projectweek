@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class JiraProjectLoaderTest {
 
     private ProjectRepository projectRepository = new ProjectRepository();
-    private Database database = new TestDatabase();
+    private Database database = TestDatabase.instance();
     private JiraProjectLoader loader = new JiraProjectLoader("test", projectRepository);
 
     @Test
@@ -27,7 +27,7 @@ public class JiraProjectLoaderTest {
 
         assertThat(database.executeInTransaction(() -> projectRepository.findAll()))
             .isNotEmpty()
-            .extracting("key").containsAll(ProjectweekAppConfig.getProjects());
+            .extracting("key").containsAll(ProjectweekAppConfig.instance().getProjects());
     }
 
     @Test

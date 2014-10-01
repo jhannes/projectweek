@@ -27,19 +27,20 @@ public class JiraClient {
     }
 
     public static String httpGetString(String configurationName, String serviceUrl) throws IOException {
-        URL url = new URL(ProjectweekAppConfig.getJiraHost(configurationName) + serviceUrl);
-        String username = ProjectweekAppConfig.getJiraUsername(configurationName);
-        String password = ProjectweekAppConfig.getJiraPassword(configurationName);
+        ProjectweekAppConfig config = ProjectweekAppConfig.instance();
+        URL url = new URL(config.getJiraHost(configurationName) + serviceUrl);
+        String username = config.getJiraUsername(configurationName);
+        String password = config.getJiraPassword(configurationName);
 
         if (url.getProtocol().equals("file") && serviceUrl.contains("?")) {
             // For testing with file URLs (!)
-            url = new URL(ProjectweekAppConfig.getJiraHost(configurationName) +
+            url = new URL(config.getJiraHost(configurationName) +
                     serviceUrl.substring(0, serviceUrl.indexOf('?')));
         }
         log.info("Fetching " + url);
 
-        URLConnection connection = url.openConnection();
         HttpURLConnection.setFollowRedirects(true);
+        URLConnection connection = url.openConnection();
         String authorization = username + ":" + password;
         connection.setRequestProperty("Authorization",
                 "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes()));
@@ -49,6 +50,7 @@ public class JiraClient {
             String line = null;
             while ((line = input.readLine()) != null) result += line;
         }
+        log.trace("Response for {}: {}", url, result);
         return result;
     }
 

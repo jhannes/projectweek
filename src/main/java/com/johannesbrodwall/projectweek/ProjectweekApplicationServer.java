@@ -10,10 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProjectweekApplicationServer extends WebServer {
 
-    private ProjectweekAppConfig config = new ProjectweekAppConfig();
+    private ProjectweekAppConfig config = ProjectweekAppConfig.instance();
 
     public ProjectweekApplicationServer() {
-        setPort(config.getPort(11080));
+        setPort(config.getHttpPort(11080));
     }
 
     @Override
@@ -24,7 +24,6 @@ public class ProjectweekApplicationServer extends WebServer {
         Flyway flyway = new Flyway();
         flyway.setDataSource(config.getDataSource());
         flyway.setLocations("db/migration", "db/baseline");
-        flyway.clean();
         flyway.migrate();
 
         addHandler(shutdownHandler());
