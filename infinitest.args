@@ -1,0 +1,1 @@
+-Dprojectweek.db.username=projectweek_infinitest -Dprojectweek.db.url=jdbc:postgresql://localhost:5432/projectweek_infinitest

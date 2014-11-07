@@ -1,7 +1,5 @@
 package com.johannesbrodwall.infrastructure;
 
-import com.mchange.v2.c3p0.DriverManagerDataSource;
-
 import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,13 +12,18 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
+import com.mchange.v2.c3p0.DriverManagerDataSource;
+
 class ConfiguredDataSource implements DataSource {
 
     private DriverManagerDataSource dataSource = new DriverManagerDataSource();
     private AppConfiguration config;
     private final String propertyPrefix;
+    private String defaultUsername;
+    private String defaultUrl;
+    private String defaultDriver;
 
-    public ConfiguredDataSource(AppConfiguration config, String propertyPrefix) {
+    ConfiguredDataSource(AppConfiguration config, String propertyPrefix) {
         this.config = config;
         this.propertyPrefix = propertyPrefix;
     }
@@ -49,10 +52,11 @@ class ConfiguredDataSource implements DataSource {
             dataSource.setJdbcUrl(getJdbcUrlFromDbUrl(dbUri));
             dataSource.setDriverClass(getJdbcDriverFromDbUrl(dbUri));
         } else {
-            dataSource.setUser(config.getRequiredProperty(propertyPrefix + ".db.username"));
+            dataSource.setUser(config.getProperty(propertyPrefix + ".db.username", defaultUsername));
             dataSource.setPassword(config.getProperty(propertyPrefix + ".db.password", dataSource.getUser()));
-            dataSource.setJdbcUrl(config.getRequiredProperty(propertyPrefix + ".db.url"));
-            dataSource.setDriverClass(config.getRequiredProperty(propertyPrefix + ".db.driverClassName"));
+            dataSource.setJdbcUrl(config.getProperty(propertyPrefix + ".db.url", defaultUrl));
+            dataSource.setDriverClass(config.getProperty(propertyPrefix + ".db.driverClassName",
+                    defaultDriver));
         }
     }
 
@@ -121,5 +125,33 @@ class ConfiguredDataSource implements DataSource {
     @Override
     public PrintWriter getLogWriter() throws SQLException {
         return getDataSource().getLogWriter();
+    }
+
+    public void setDefaultUsername(String defaultUsername) {
+        this.defaultUsername = defaultUsername;
+    }
+
+    public void setDefaultUrl(String defaultUrl) {
+        this.defaultUrl = defaultUrl;
+    }
+
+    public void setDefaultDriver(String defaultDriver) {
+        this.defaultDriver = defaultDriver;
+    }
+
+    static DataSource getOracleDataSource(AppConfiguration config, String propertyPrefix) {
+        ConfiguredDataSource dataSource = new ConfiguredDataSource(config, propertyPrefix);
+        dataSource.setDefaultUsername(propertyPrefix);
+        dataSource.setDefaultUrl("jdbc:oracle:thin:@localhost:1521:XE");
+        dataSource.setDefaultDriver("oracle.jdbc.driver.OracleDriver");
+        return dataSource;
+    }
+
+    static DataSource getPostgresDataSource(AppConfiguration config, String propertyPrefix) {
+        ConfiguredDataSource dataSource = new ConfiguredDataSource(config, propertyPrefix);
+        dataSource.setDefaultUsername(propertyPrefix + "user");
+        dataSource.setDefaultUrl("jdbc:postgresql://localhost:5432/" + propertyPrefix);
+        dataSource.setDefaultDriver("org.postgresql.Driver");
+        return dataSource;
     }
 }

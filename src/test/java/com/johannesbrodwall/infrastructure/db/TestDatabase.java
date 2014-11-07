@@ -14,7 +14,7 @@ public class TestDatabase extends Database {
     }
 
     private TestDatabase() {
-        super(ProjectweekAppConfig.instance());
+        super(new ProjectweekAppConfig("projectweek-test.properties"));
 
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();

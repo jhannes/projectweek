@@ -24,7 +24,7 @@ public abstract class AppConfiguration {
     protected AppConfiguration(String filename, String propertyPrefix) {
         this.configFile = new File(filename);
         this.propertyPrefix = propertyPrefix;
-        dataSource = new ConfiguredDataSource(this, propertyPrefix);
+        dataSource = ConfiguredDataSource.getPostgresDataSource(this, propertyPrefix);
     }
 
     public String getProperty(String propertyName, String defaultValue) {
