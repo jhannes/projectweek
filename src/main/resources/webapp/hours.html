@@ -1,0 +1,194 @@
+<section>
+  <h2>Project hours</h2>
+
+  <div class="filter">
+    <form role="form">
+      <div class="form-group">
+        <label for="hoursWeekNumber">Week number:</label>
+        <select class="form-control" name="weekNumber" id="hoursWeekNumber"></select>
+      </div>
+      <div class="form-group">
+        <label for="hoursTeam">Team:</label>
+        <select class="form-control" name="team" id="hoursTeam"></select>
+      </div>
+    </form>
+  </div>
+
+  <div>
+
+<table id="hourSummary">
+  <thead>
+    <tr>
+      <th>Person</th>
+      <th>Story</th>
+      <th>Monday</th>
+      <th>Tuesday</th>
+      <th>Wednesday</th>
+      <th>Thursday</th>
+      <th>Friday</th>
+      <th>Sum</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="personSummary">
+      <td>Evgeny</td>
+      <td colspan="6"></td>
+      <td class="hours">40</td>
+    <tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>ORD-12</td>
+      <td class="hours">8</td>
+      <td class="hours">8</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td class="hours">16</td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>ORD-12</td>
+      <td></td>
+      <td></td>
+      <td class="hours">8</td>
+      <td class="hours">8</td>
+      <td class="hours">8</td>
+      <td class="hours">24</td>
+    </tr>
+    <tr class="personSummary">
+      <td>Evgeny</td>
+      <td colspan="6"></td>
+      <td class="hours">40</td>
+    <tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>ORD-12</td>
+      <td class="hours">8</td>
+      <td class="hours">8</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td class="hours">16</td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>ORD-12</td>
+      <td></td>
+      <td></td>
+      <td class="hours">8</td>
+      <td class="hours">8</td>
+      <td class="hours">8</td>
+      <td class="hours">24</td>
+    </tr>
+  </tbody>
+
+</table>
+
+  
+  </div>
+
+
+</section>
+
+<script>
+	var teams = [ 'Oslo', 'Minsk' ];
+	var weeks = [
+       { name: '0w', display: '2014-w40' },
+       { name: '-1w', display: '2014-w39' },
+       { name: '-2w', display: '2014-w38' },
+       { name: '-3w', display: '2014-w37' },
+	];
+	
+	var hours = [
+	   {
+		   person: 'Evgeny', sum: 40,
+		   issues: [
+	            { issue: 'ORD-12', hours: [8, 8, 0, 0, 0], sum: 16  },
+	            { issue: 'ORD-13', hours: [0, 0, 4, 8, 0], sum: 12  },
+	            { issue: 'ORD-14', hours: [0, 0, 4, 0, 8], sum: 12  },
+           ]
+	   }          
+   ];
+</script>
+<script>
+var fillTeams = function(teams) {
+	$("#hoursTeam option").remove();
+	for (var i=0; i<teams.length; i++) {
+		var option = $("<option>").val(teams[i]).text(teams[i]);
+		$("#hoursTeam").append(option);
+	}
+    showSelectedData();
+}
+
+var fillWeeks = function(weeks) {
+	$("#hoursWeekNumber option").remove();
+	for (var i=0; i<weeks.length; i++) {
+		var option = $("<option>").val(weeks[i].name).text(weeks[i].display);
+		$("#hoursWeekNumber").append(option);
+	}
+    showSelectedData();
+}
+
+var fillHours = function(hours) {
+  var tbody = $("<tbody>");
+	
+  for (var i = 0; i < hours.length; i++) {
+    var summaryTd = $("<tr class='personSummary'>");
+    summaryTd.append($("<td>").text(hours[i].person));
+    summaryTd.append($("<td colspan='6'>"));
+    summaryTd.append($("<td class='hours'>").text(hours[i].sum));
+    tbody.append(summaryTd);
+
+    for (var j = 0; j < hours[i].issues.length; j++) {
+      var hoursLine = hours[i].issues[j];
+      var issueTd = $("<tr>");
+      issueTd.append($("<td>"));
+      issueTd.append($("<td>").text(hoursLine.issue));
+      for (var k = 0; k < hoursLine.hours.length; k++) {
+         issueTd.append($("<td class='hours'>").text(hoursLine.hours[k]));
+      };
+      issueTd.append($("<td class='hours'>").text(hoursLine.sum));
+      tbody.append(issueTd);
+    };
+    $("#hourSummary tbody").remove();
+    $("#hourSummary").append(tbody);
+  };
+};
+
+var updateLocation = function() {
+	document.location.hash = "#hours?week=" + $("#hoursWeekNumber").val() + "&team=" + $("#hoursTeam").val();
+}
+
+var showSelectedData = function() {
+	var queryString = document.location.hash.slice(document.location.hash.indexOf('#') + 1).split('?')[1];
+	if (!queryString) return;
+	
+	var vars = {};
+	var hashes = queryString.split('&');
+	for(var i = 0; i < hashes.length; i++) {
+		var hash = hashes[i].split('=');
+		if(hash.length > 1) {
+			vars[hash[0]] = hash[1];
+		} else {
+			vars[hash[0]] = null;
+		}
+	}
+	console.log("params", vars, "week", vars.week);
+	$("#hoursWeekNumber").val(vars.week);
+	$("#hoursTeam").val(vars.team);
+};
+
+$(function() {
+  $(window).bind('hashchange', showSelectedData).trigger('hashchange');
+
+  $("select").change(updateLocation);
+  
+  fillTeams(teams);
+  fillWeeks(weeks);
+  
+  fillHours(hours);
+
+  showSelectedData();
+});
+
+</script>

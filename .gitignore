@@ -1,1 +1,4 @@
 /projectweek.properties
+/src/test/resources/jira-rest-api
+bower_components
+node_modules
