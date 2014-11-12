@@ -1,8 +1,6 @@
 package com.johannesbrodwall.infrastructure.db;
 
 
-import com.johannesbrodwall.projectweek.ProjectweekAppConfig;
-
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,19 +12,24 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
 import lombok.SneakyThrows;
 
 public class Database {
 
     private static ThreadLocal<Connection> currentConnection = new ThreadLocal<Connection>();
 
-    protected final ProjectweekAppConfig config;
+    private DataSource dataSource;
 
-    public Database(ProjectweekAppConfig config) {
-        this.config = config;
+    public Database(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     private static Connection getConnection() {
+        if (currentConnection.get() == null) {
+            throw new IllegalStateException("Start database transaction before database commands");
+        }
         return currentConnection.get();
     }
 
@@ -44,7 +47,7 @@ public class Database {
     }
 
     private Transaction beginTransaction() throws SQLException {
-        currentConnection.set(config.getDataSource().getConnection());
+        currentConnection.set(getDataSource().getConnection());
         currentConnection.get().setAutoCommit(false);
         return new Transaction() {
 
@@ -72,14 +75,20 @@ public class Database {
         };
     }
 
-    public static void executeOperation(String query, Object... parameters) throws SQLException {
+    private DataSource getDataSource() {
+        return dataSource;
+    }
+
+    @SneakyThrows
+    public int executeOperation(String query, Object... parameters) {
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
             setParameters(stmt, parameters);
-            stmt.executeUpdate();
+            return stmt.executeUpdate();
         }
     }
 
-    public static int queryForPrimaryInt(String query) throws SQLException {
+    @SneakyThrows
+    public int queryForPrimaryInt(String query) {
         try (Statement stmt = Database.getConnection().createStatement()) {
             try ( ResultSet rs = stmt.executeQuery(query) ) {
                 if (rs.next()) return rs.getInt(1);
@@ -88,7 +97,8 @@ public class Database {
         }
     }
 
-    public static <T> List<T> queryForList(String query, ResultSetTransformer<T> transformer, Object... parameters) throws SQLException {
+    @SneakyThrows
+    public <T> List<T> queryForList(String query, ResultSetTransformer<T> transformer, Object... parameters) {
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
             setParameters(stmt, parameters);
             try ( ResultSet rs = stmt.executeQuery() ) {
@@ -97,7 +107,8 @@ public class Database {
         }
     }
 
-    public static void query(String query, ResultSetOperation operation, Object... parameters) throws SQLException {
+    @SneakyThrows
+    public void query(String query, ResultSetOperation operation, Object... parameters) {
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
             setParameters(stmt, parameters);
             try ( ResultSet rs = stmt.executeQuery() ) {
@@ -108,7 +119,8 @@ public class Database {
         }
     }
 
-    public static <T> T queryForSingle(String query, ResultSetTransformer<T> transformer, Object... parameters) throws SQLException {
+    @SneakyThrows
+    public <T> T queryForSingle(String query, ResultSetTransformer<T> transformer, Object... parameters) {
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(query)) {
             setParameters(stmt, parameters);
             try ( ResultSet rs = stmt.executeQuery() ) {
@@ -123,7 +135,7 @@ public class Database {
         }
     }
 
-    private static void setParameters(PreparedStatement stmt, Object... parameters)
+    private void setParameters(PreparedStatement stmt, Object... parameters)
             throws SQLException {
         for (int i = 0; i < parameters.length; i++) {
             if (parameters[i] instanceof Instant) {
@@ -135,12 +147,17 @@ public class Database {
         }
     }
 
-    private static <T> List<T> transformResultSet(ResultSetTransformer<T> transformer, ResultSet rs) throws SQLException {
+    private <T> List<T> transformResultSet(ResultSetTransformer<T> transformer, ResultSet rs) throws SQLException {
         List<T> result = new ArrayList<T>();
         while (rs.next()) {
             result.add(transformer.execute(rs));
         }
         return result;
+    }
+
+    public Instant getInstant(ResultSet rs, String fieldName) throws SQLException {
+        Timestamp timestamp = rs.getTimestamp(fieldName);
+        return timestamp != null ? timestamp.toInstant() : null;
     }
 
 }

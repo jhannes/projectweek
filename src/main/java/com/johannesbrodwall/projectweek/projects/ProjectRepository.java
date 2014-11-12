@@ -2,20 +2,20 @@ package com.johannesbrodwall.projectweek.projects;
 
 import com.johannesbrodwall.infrastructure.Repository;
 import com.johannesbrodwall.infrastructure.db.Database;
+import com.johannesbrodwall.projectweek.ProjectweekDatabase;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
-import lombok.SneakyThrows;
-
 public class ProjectRepository implements Repository<Project> {
 
-    @SneakyThrows
+    private Database database = new ProjectweekDatabase();
+
     @Override
     public void deleteAll() {
-        Database.executeOperation("delete from projects");
+        database.executeOperation("delete from projects");
     }
 
     private Project mapToEntity(ResultSet rs) throws SQLException {
@@ -24,25 +24,23 @@ public class ProjectRepository implements Repository<Project> {
         return project;
     }
 
-    @SneakyThrows
     @Override
     public Collection<Project> findAll() {
-        return Database.queryForList("select * from projects", this::mapToEntity);
+        return database.queryForList("select * from projects", this::mapToEntity);
     }
 
-    @SneakyThrows
     @Override
     public void insertOrUpdate(Project project) {
-        List<Integer> result = Database.queryForList("select id from projects where key = ?",
+        List<Integer> result = database.queryForList("select id from projects where key = ?",
                 (rs) -> rs.getInt("id"),
                 project.getKey());
         if (result.isEmpty()) {
-            Database.executeOperation("insert into projects (key, displayName) values (?, ?)",
+            database.executeOperation("insert into projects (key, displayName) values (?, ?)",
                     project.getKey(), project.getName());
-            project.setId(Database.queryForPrimaryInt("select last_value from projects_id_seq"));
+            project.setId(database.queryForPrimaryInt("select last_value from projects_id_seq"));
         } else {
             int key = result.get(0);
-            Database.executeOperation("update projects set key = ?, displayName = ? where id = ?",
+            database.executeOperation("update projects set key = ?, displayName = ? where id = ?",
                     project.getKey(), project.getName(), key);
             project.setId(key);
         }
