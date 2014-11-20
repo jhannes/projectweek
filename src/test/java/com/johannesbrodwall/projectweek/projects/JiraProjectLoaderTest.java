@@ -35,7 +35,11 @@ public class JiraProjectLoaderTest {
 
         assertThat(database.executeInTransaction(() -> projectRepository.findAll()))
             .isNotEmpty()
-            .extracting("key").containsAll(ProjectweekAppConfig.instance().getProjects());
+            .extracting("key").containsAll(getProjects());
+    }
+
+    private List<String> getProjects() {
+        return config.getRequiredPropertyList("projects");
     }
 
     @Test

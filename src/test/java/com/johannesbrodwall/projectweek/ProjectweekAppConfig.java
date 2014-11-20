@@ -20,19 +20,23 @@ public class ProjectweekAppConfig extends AppConfiguration {
     private static ProjectweekAppConfig instance = new ProjectweekAppConfig();
 
     public List<String> getProjects() {
-        return Arrays.asList(getRequiredProperty("projects").split(","));
+        return getRequiredPropertyList("projects");
+    }
+
+    public List<String> getRequiredPropertyList(String property) {
+        return Arrays.asList(getRequiredProperty(property).split(","));
     }
 
     public String getJiraHost(String configurationName) {
-        return getRequiredProperty("jira.host." + configurationName);
+        return getRequiredProperty("jira." + configurationName + ".host");
     }
 
     public String getJiraUsername(String configurationName) {
-        return getRequiredProperty("jira.username." + configurationName);
+        return getProperty("jira." + configurationName + ".username", "username");
     }
 
     public String getJiraPassword(String configurationName) {
-        return getRequiredProperty("jira.password." + configurationName);
+        return getProperty("jira." + configurationName + ".password", "password");
     }
 
     public static ProjectweekAppConfig instance() {

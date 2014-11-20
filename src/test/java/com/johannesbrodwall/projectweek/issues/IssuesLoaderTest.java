@@ -12,6 +12,7 @@ import com.johannesbrodwall.projectweek.ProjectweekDatabase;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 public class IssuesLoaderTest {
 
@@ -30,7 +31,7 @@ public class IssuesLoaderTest {
     public void shouldLoadAllProjectsFromJira() throws IOException {
         database.executeInTransaction(() -> repository.deleteAll());
 
-        String project = ProjectweekAppConfig.instance().getProjects().get(0);
+        String project = getProjects().get(0);
         database.executeInTransaction(() -> loader.load(project));
 
         Collection<Issue> issues = database.executeInTransaction(() -> repository.findAll());
@@ -51,7 +52,7 @@ public class IssuesLoaderTest {
     public void shouldOnlyLoadProjectOnce() throws IOException {
         database.executeInTransaction(() -> repository.deleteAll());
 
-        String project = ProjectweekAppConfig.instance().getProjects().get(0);
+        String project = getProjects().get(0);
         database.executeInTransaction(() -> loader.load(project));
         Collection<Issue> issues = database.executeInTransaction(() -> repository.findAll());
         Issue firstIssue = issues.iterator().next();
@@ -62,6 +63,10 @@ public class IssuesLoaderTest {
         assertThat(issueSecond.getId()).isEqualTo(firstIssue.getId());
 
         assertThat(firstIssue.getWorklogs()).isEqualTo(issueSecond.getWorklogs());
+    }
+
+    private List<String> getProjects() {
+        return config.getRequiredPropertyList("projects");
     }
 
 }
