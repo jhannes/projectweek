@@ -18,16 +18,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JiraClient {
 
-    public static JSONArray httpGetJSONArray(String configurationName, String serviceUrl) throws IOException {
-        return new JSONArray(httpGetString(configurationName, serviceUrl));
+    private ProjectweekAppConfig config;
+    private String configurationName;
+
+    public JiraClient(ProjectweekAppConfig config, String configurationName) {
+        this.config = config;
+        this.configurationName = configurationName;
     }
 
-    public static JSONObject httpGetJSONObject(String configurationName, String serviceUrl) throws IOException {
-        return new JSONObject(httpGetString(configurationName, serviceUrl));
+    public JSONArray httpGetJSONArray(String serviceUrl) throws IOException {
+        return new JSONArray(httpGetString(serviceUrl));
     }
 
-    public static String httpGetString(String configurationName, String serviceUrl) throws IOException {
-        ProjectweekAppConfig config = ProjectweekAppConfig.instance();
+    public JSONObject httpGetJSONObject(String serviceUrl) throws IOException {
+        return new JSONObject(httpGetString(serviceUrl));
+    }
+
+    private String httpGetString(String serviceUrl) throws IOException {
         URL url = new URL(config.getJiraHost(configurationName) + serviceUrl);
         String username = config.getJiraUsername(configurationName);
         String password = config.getJiraPassword(configurationName);

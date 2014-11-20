@@ -4,23 +4,23 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.johannesbrodwall.infrastructure.jira.JiraClient;
-
+import com.johannesbrodwall.projectweek.ProjectweekAppConfig;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 public class JiraIssuesLoader {
 
-    private final String configurationName;
     private IssuesRepository issueRepository = new IssuesRepository();
+    private JiraClient jiraClient;
+
+    public JiraIssuesLoader(String configurationName, ProjectweekAppConfig config) {
+        this.jiraClient = new JiraClient(config, configurationName);
+    }
 
     public void load(String project) throws IOException {
-        JSONObject result = JiraClient.httpGetJSONObject(configurationName,
-                "/rest/api/2/search?jql=project=" + project + "&maxResults=1&expand=changelog");
+        JSONObject result = jiraClient.httpGetJSONObject("/rest/api/2/search?jql=project=" + project + "&maxResults=1&expand=changelog");
 
         JSONArray issues = result.getJSONArray("issues");
         for (int i = 0; i < issues.length(); i++) {
@@ -40,8 +40,7 @@ public class JiraIssuesLoader {
     }
 
     private void readWorklog(Issue issue, String id) throws IOException {
-        JSONObject worklog = JiraClient.httpGetJSONObject(configurationName,
-                "/rest/api/2/issue/" + id + "/worklog");
+        JSONObject worklog = jiraClient.httpGetJSONObject("/rest/api/2/issue/" + id + "/worklog");
         JSONArray worklogs = worklog.getJSONArray("worklogs");
         for (int i = 0; i < worklogs.length(); i++) {
             JSONObject worklogItem = worklogs.getJSONObject(i);

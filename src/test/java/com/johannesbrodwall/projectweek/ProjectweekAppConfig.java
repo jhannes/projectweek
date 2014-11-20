@@ -5,6 +5,8 @@ import com.johannesbrodwall.infrastructure.AppConfiguration;
 import java.util.Arrays;
 import java.util.List;
 
+import org.flywaydb.core.Flyway;
+
 public class ProjectweekAppConfig extends AppConfiguration {
 
     private ProjectweekAppConfig() {
@@ -35,5 +37,14 @@ public class ProjectweekAppConfig extends AppConfiguration {
 
     public static ProjectweekAppConfig instance() {
         return instance;
+    }
+
+    public void resetDatabase() {
+        Flyway flyway = new Flyway();
+        flyway.setDataSource(getDataSource());
+        if (getFlag("test.clean-db", false)) {
+            flyway.clean();
+        }
+        flyway.migrate();
     }
 }
