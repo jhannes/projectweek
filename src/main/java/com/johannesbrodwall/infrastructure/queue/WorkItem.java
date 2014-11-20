@@ -55,4 +55,9 @@ public class WorkItem {
         this.status = WorkItemStatus.forCode(status);
     }
 
+    public boolean hasMoreRetries() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 }

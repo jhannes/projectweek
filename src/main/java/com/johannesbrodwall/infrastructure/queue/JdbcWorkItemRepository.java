@@ -21,6 +21,8 @@ public class JdbcWorkItemRepository implements WorkItemRepository {
 
     @Override
     public Collection<WorkItem> findAll() {
+        // TODO generate statistics for datetime interval with median and 90% times
+        //   for max(created,start_after) -> completed and started -> completed
         return database.queryForList("select * from " + tableName, this::mapToEntity);
     }
 
@@ -32,6 +34,9 @@ public class JdbcWorkItemRepository implements WorkItemRepository {
 
     @Override
     public void insert(WorkItem entity) {
+        // TODO create a performance test that inserts 1 million rows with status COMPLETE/RETRY/FAILED
+        //     and a few hundred with QUEUED and verify performance
+        // TODO correlation id
         database.executeOperation(
                 "INSERT INTO " + tableName +
                 " (created_at, created_on_host, started_at, started_on_host, completed_at, completed_on_host, start_after, status) "
@@ -45,6 +50,8 @@ public class JdbcWorkItemRepository implements WorkItemRepository {
 
     @Override
     public List<WorkItem> startWorking(int maxItems) {
+        // TODO order by priority, weight, filter by priority and weight
+        // TODO when PostgreSQL supports it, use "FOR UPDATE SKIP LOCKED"
         List<WorkItem> workItems = database.queryForList(
                 "select * from " + tableName
                 + " where started_at is null and completed_at is null and status = ? and start_after <= ?"
@@ -121,6 +128,32 @@ public class JdbcWorkItemRepository implements WorkItemRepository {
     @Override
     public void deleteAll() {
         database.executeOperation("delete from " + tableName);
+    }
+
+    @Override
+    public void retryOrAbort(WorkItem workItem, Exception e) {
+        //workItem.setException(e);
+        workItem.setStatus(WorkItemStatus.FAILED);
+
+        if (shouldRetry(e) && workItem.hasMoreRetries()) {
+            WorkItem retryItem = cloneWorkItem(workItem);
+//            retryItem.setRetryNumber(workItem.getRetryNumber() + 1);
+//            retryItem.setRetryOf(workItem.getId());
+            workItem.setStatus(WorkItemStatus.RETRIED);
+            insert(retryItem);
+        }
+
+        // TODO save original work item
+    }
+
+    private WorkItem cloneWorkItem(WorkItem workItem) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private boolean shouldRetry(Exception e) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
 }

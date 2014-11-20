@@ -11,4 +11,5 @@ public interface WorkItemRepository {
     WorkItem startWorking();
     void complete(WorkItem workItem);
     List<WorkItem> startWorking(int maxItems);
+    void retryOrAbort(WorkItem workItem, Exception e);
 }

@@ -2,7 +2,7 @@ package com.johannesbrodwall.infrastructure.queue;
 
 public enum WorkItemStatus {
 
-    QUEUED(0), STARTED(1), COMPLETED(2);
+    QUEUED(0), STARTED(1), COMPLETED(2), FAILED(-1), RETRIED(-2);
 
     private int value;
 

@@ -17,7 +17,7 @@ import org.junit.Test;
 import com.johannesbrodwall.infrastructure.db.Database;
 import com.johannesbrodwall.infrastructure.db.TestDatabase;
 
-public class QueueTest {
+public class WorkItemRepositoryTest {
     private Database database = TestDatabase.instance();
     private WorkItemRepository repository = new JdbcWorkItemRepository();
 
@@ -41,18 +41,16 @@ public class QueueTest {
     @Test
     public void shouldTakeOneJob() {
         WorkItem workItem = sampleWorkItem();
-
         database.executeInTransaction(() -> repository.insert(workItem));
+
         WorkItem taken = database.executeInTransaction(() -> repository.startWorking());
         assertThat(taken).isEqualTo(workItem);
+        assertThat(taken.getStartedAt()).isNotNull();
+        assertThat(taken.getStartedOnHost()).isEqualTo(getLocalHostAddress());
+        assertThat(taken.getStatus()).isEqualTo(WorkItemStatus.STARTED);
 
         assertThat(database.executeInTransaction(() -> repository.startWorking()))
             .isNull();
-
-        WorkItem startedWorkItem = database.executeInTransaction(() -> repository.fetch(workItem.getId()));
-        assertThat(startedWorkItem.getStartedAt()).isNotNull();
-        assertThat(startedWorkItem.getStartedOnHost()).isEqualTo(getLocalHostAddress());
-        assertThat(startedWorkItem.getStatus()).isEqualTo(WorkItemStatus.STARTED);
     }
 
     @Test
@@ -177,14 +175,6 @@ public class QueueTest {
         workItem.setStartedAt(startedAt);
         workItem.setStartedOnHost(getLocalHostAddress());
         workItem.setStatus(WorkItemStatus.STARTED);
-        return workItem;
-    }
-
-    private WorkItem completedWorkItem(Instant completedAt) {
-        WorkItem workItem = startedWorkItem(completedAt.minusSeconds(13601));
-        workItem.setCompletedAt(completedAt);
-        workItem.setCompletedOnHost(getLocalHostAddress());
-        workItem.setStatus(WorkItemStatus.COMPLETED);
         return workItem;
     }
 }
