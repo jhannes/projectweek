@@ -5,8 +5,10 @@ import org.json.JSONObject;
 
 import com.johannesbrodwall.infrastructure.jira.JiraClient;
 import com.johannesbrodwall.projectweek.ProjectweekAppConfig;
+
 import java.io.IOException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -20,7 +22,8 @@ public class JiraIssuesLoader {
     }
 
     public void load(String project) throws IOException {
-        JSONObject result = jiraClient.httpGetJSONObject("/rest/api/2/search?jql=project=" + project + "&maxResults=1&expand=changelog");
+        JSONObject result = jiraClient.httpGetJSONObject("/rest/api/2/search?"
+                + "jql=" + getJql(project) + "&maxResults=1000&expand=changelog");
 
         JSONArray issues = result.getJSONArray("issues");
         for (int i = 0; i < issues.length(); i++) {
@@ -28,10 +31,24 @@ public class JiraIssuesLoader {
         }
     }
 
+    String getJql(String project) {
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("yyyy-MM-dd+HH:mm").withZone(ZoneId.systemDefault());
+        Instant lastModified = issueRepository.getLastModified(project);
+        if (lastModified == null) {
+            return "project=\"" + project + "\"+order+by+updated+asc";
+        } else {
+            return "project=\"" + project + "\"+"
+                    + "and+updated+>+\"" + formatter.format(lastModified) + "\"+"
+                    + "order+by+updated+asc";
+        }
+    }
+
     private Issue toEntity(JSONObject json) throws IOException {
         Issue issue = new Issue(
                 json.getString("key"),
                 json.getJSONObject("fields").getJSONObject("project").getString("key"));
+        issue.setUpdated(getInstant(json.getJSONObject("fields"), "updated"));
 
         readWorkHistory(issue, json.getJSONObject("changelog").getJSONArray("histories"));
         readWorklog(issue, json.getString("id"));

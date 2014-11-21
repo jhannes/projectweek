@@ -17,6 +17,9 @@ public class Issue {
     @Getter
     private final String key, projectKey;
 
+    @Getter @Setter
+    private Instant updated;
+
     @Getter
     private List<IssueStatus> statusChanges = new ArrayList<>();
 
@@ -32,6 +35,5 @@ public class Issue {
     public void addWorklog(Instant workStarted, String author, int secondsWorked) {
         worklogs.add(new Worklog(workStarted, secondsWorked, author));
     }
-
 
 }

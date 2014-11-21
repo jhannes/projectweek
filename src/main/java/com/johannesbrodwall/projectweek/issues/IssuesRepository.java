@@ -6,6 +6,7 @@ import com.johannesbrodwall.infrastructure.db.Query;
 import com.johannesbrodwall.projectweek.ProjectweekDatabase;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -28,6 +29,7 @@ public class IssuesRepository implements Repository<Issue> {
         SortedMap<Integer, Issue> result = new TreeMap<>();
         database.query("SELECT * FROM Issues ORDER BY key", (rs) -> {
             Issue issue = new Issue(rs.getString("key"), rs.getString("project_key"));
+            issue.setUpdated(rs.getTimestamp("updated_at").toInstant());
             issue.setId(rs.getInt("id"));
             result.put(rs.getInt("id"), issue);
         });
@@ -58,8 +60,8 @@ public class IssuesRepository implements Repository<Issue> {
                 (rs) -> rs.getInt("id"),
                 issue.getKey()));
         if (issue.getId() == null) {
-            database.executeOperation("INSERT INTO Issues (key, project_key) VALUES (?, ?)",
-                    issue.getKey(), issue.getProjectKey());
+            database.executeOperation("INSERT INTO Issues (key, project_key, updated_at) VALUES (?, ?, ?)",
+                    issue.getKey(), issue.getProjectKey(), issue.getUpdated());
             issue.setId(database.queryForPrimaryInt("SELECT last_value FROM Issues_Id_Seq"));
         } else {
             database.executeOperation("UPDATE Issues SET key = ?, project_key = ? WHERE id = ?",
@@ -108,5 +110,11 @@ public class IssuesRepository implements Repository<Issue> {
          }, issue.getId());
 
         return issue;
+    }
+
+    public Instant getLastModified(String project) {
+        return database.queryForSingle(
+                "SELECT max(updated_at) as last_update FROM Issues WHERE project_key = ?",
+                rs -> database.getInstant(rs, "last_update"), project);
     }
 }

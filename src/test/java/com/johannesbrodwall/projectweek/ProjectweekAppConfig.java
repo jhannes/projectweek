@@ -19,8 +19,8 @@ public class ProjectweekAppConfig extends AppConfiguration {
 
     private static ProjectweekAppConfig instance = new ProjectweekAppConfig();
 
-    public List<String> getProjects() {
-        return getRequiredPropertyList("projects");
+    public List<String> getProjects(String siteName) {
+        return getRequiredPropertyList("jira." + siteName + ".projects");
     }
 
     public List<String> getRequiredPropertyList(String property) {

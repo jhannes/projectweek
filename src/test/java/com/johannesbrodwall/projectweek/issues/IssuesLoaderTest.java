@@ -1,6 +1,6 @@
 package com.johannesbrodwall.projectweek.issues;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.johannesbrodwall.projectweek.ProjectweekAssertions.assertThat;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +11,9 @@ import com.johannesbrodwall.projectweek.ProjectweekAppConfig;
 import com.johannesbrodwall.projectweek.ProjectweekDatabase;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -39,17 +42,22 @@ public class IssuesLoaderTest {
             .isNotEmpty()
             .extracting("projectKey").containsOnly(project);
 
-        assertThat(issues.iterator().next().getStatusChanges()).extracting("status")
+        Issue issue = issues.iterator().next();
+
+        assertThat(issue.getUpdated())
+            .isAfter(LocalDate.of(1999, 1, 1));
+
+        assertThat(issue.getStatusChanges()).extracting("status")
             .isNotEmpty()
             .doesNotContain(new Object[] { null });
 
-        Worklog someWorklog = issues.iterator().next().getWorklogs().iterator().next();
+        Worklog someWorklog = issue.getWorklogs().iterator().next();
         assertThat(someWorklog.getHours()).isPositive();
         assertThat(someWorklog.getAuthor()).isNotEmpty();
     }
 
     @Test
-    public void shouldOnlyLoadProjectOnce() throws IOException {
+    public void shouldOnlyLoadIssueOnce() throws IOException {
         database.executeInTransaction(() -> repository.deleteAll());
 
         String project = getProjects().get(0);
@@ -63,6 +71,23 @@ public class IssuesLoaderTest {
         assertThat(issueSecond.getId()).isEqualTo(firstIssue.getId());
 
         assertThat(firstIssue.getWorklogs()).isEqualTo(issueSecond.getWorklogs());
+    }
+
+    @Test
+    public void shouldStartAtLastLoadPoint() {
+        database.executeInTransaction(() -> {
+            assertThat(loader.getJql("TEST")).isEqualTo("project=\"TEST\"+order+by+updated+asc");
+        });
+
+        database.executeInTransaction(() -> repository.deleteAll());
+        Issue issue = new Issue("TEST-11", "TEST");
+        issue.setUpdated(ZonedDateTime.of(2011, 10, 1, 22, 31, 11, 0, ZoneId.of("CET")).toInstant());
+        database.executeInTransaction(() -> repository.insertOrUpdate(issue));
+
+        database.executeInTransaction(() -> {
+            assertThat(loader.getJql("TEST"))
+            .isEqualTo("project=\"TEST\"+and+updated+>+\"2011-10-01+22:31\"+order+by+updated+asc");
+        });
     }
 
     private List<String> getProjects() {
