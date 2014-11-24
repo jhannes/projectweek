@@ -9,9 +9,22 @@ import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.webapp.WebInfConfiguration;
 import org.eclipse.jetty.webapp.WebXmlConfiguration;
+import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
+
+import lombok.SneakyThrows;
 
 public class WebServer {
 
@@ -70,6 +83,42 @@ public class WebServer {
         contextHandler.setContextPath(contextPath);
         contextHandler.setNewContextURL(server);
         return contextHandler;
+    }
+
+    public static void setupLogin(String logConfig) throws JoranException {
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+    
+        extractConfiguration(logConfig);
+    
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.reset();
+        JoranConfigurator configurator = new JoranConfigurator();
+        configurator.setContext(loggerContext);
+        configurator.doConfigure(logConfig);
+    }
+
+    @SneakyThrows(IOException.class)
+    public static void extractConfiguration(String filename) {
+        File file = new File(filename);
+        if (file.exists()) return;
+
+        try (FileOutputStream output = new FileOutputStream(file)) {
+            try (InputStream input = WebServer.class.getResourceAsStream("/" + filename)) {
+                if (input == null) {
+                    throw new IllegalArgumentException("Can't find /" + filename + " in classpath");
+                }
+                copy(input, output);
+            }
+        }
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buf = new byte[1024];
+        int count = 0;
+        while ((count = in.read(buf)) >= 0) {
+            out.write(buf, 0, count);
+        }
     }
 
 }

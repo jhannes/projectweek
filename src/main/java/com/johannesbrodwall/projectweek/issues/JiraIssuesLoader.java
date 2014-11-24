@@ -12,6 +12,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class JiraIssuesLoader {
 
     private IssuesRepository issueRepository = new IssuesRepository();
@@ -22,8 +25,9 @@ public class JiraIssuesLoader {
     }
 
     public void load(String project) throws IOException {
+        log.info("Loading project " + getJql(project));
         JSONObject result = jiraClient.httpGetJSONObject("/rest/api/2/search?"
-                + "jql=" + getJql(project) + "&maxResults=1000&expand=changelog");
+                + "jql=" + getJql(project) + "&maxResults=10000&expand=changelog");
 
         JSONArray issues = result.getJSONArray("issues");
         for (int i = 0; i < issues.length(); i++) {

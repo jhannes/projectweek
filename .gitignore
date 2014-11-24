@@ -3,3 +3,5 @@
 /src/test/resources/jira-rest-api
 bower_components
 node_modules
+*.log
+logging-projectweek.xml

@@ -44,7 +44,7 @@ public class JiraClient {
             url = new URL(config.getJiraHost(configurationName) +
                     serviceUrl.substring(0, serviceUrl.indexOf('?')));
         }
-        log.info("Fetching " + url);
+        log.debug("Fetching {}", url);
 
         HttpURLConnection.setFollowRedirects(true);
         URLConnection connection = url.openConnection();
