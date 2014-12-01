@@ -12,11 +12,11 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
-import com.mchange.v2.c3p0.DriverManagerDataSource;
+import com.zaxxer.hikari.HikariDataSource;
 
 class ConfiguredDataSource implements DataSource {
 
-    private DriverManagerDataSource dataSource = new DriverManagerDataSource();
+    private HikariDataSource dataSource = new HikariDataSource();
     private AppConfiguration config;
     private final String propertyPrefix;
     private String defaultUsername;
@@ -38,7 +38,7 @@ class ConfiguredDataSource implements DataSource {
         return getDataSource().getConnection();
     }
 
-    private DriverManagerDataSource getDataSource() {
+    private DataSource getDataSource() {
         updateProperties();
         return dataSource;
     }
@@ -47,15 +47,15 @@ class ConfiguredDataSource implements DataSource {
         String databaseUrl = System.getenv("DATABASE_URL");
         if (databaseUrl != null) {
             URI dbUri = getDatabaseUri(databaseUrl);
-            dataSource.setUser(dbUri.getUserInfo().split(":")[0]);
+            dataSource.setUsername(dbUri.getUserInfo().split(":")[0]);
             dataSource.setPassword(dbUri.getUserInfo().split(":")[1]);
             dataSource.setJdbcUrl(getJdbcUrlFromDbUrl(dbUri));
-            dataSource.setDriverClass(getJdbcDriverFromDbUrl(dbUri));
+            dataSource.setDriverClassName(getJdbcDriverFromDbUrl(dbUri));
         } else {
-            dataSource.setUser(config.getProperty(propertyPrefix + ".db.username", defaultUsername));
-            dataSource.setPassword(config.getProperty(propertyPrefix + ".db.password", dataSource.getUser()));
+            dataSource.setUsername(config.getProperty(propertyPrefix + ".db.username", defaultUsername));
+            dataSource.setPassword(config.getProperty(propertyPrefix + ".db.password", dataSource.getUsername()));
             dataSource.setJdbcUrl(config.getProperty(propertyPrefix + ".db.url", defaultUrl));
-            dataSource.setDriverClass(config.getProperty(propertyPrefix + ".db.driverClassName",
+            dataSource.setDriverClassName(config.getProperty(propertyPrefix + ".db.driverClassName",
                     defaultDriver));
         }
     }
