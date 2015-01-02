@@ -5,3 +5,6 @@ bower_components
 node_modules
 *.log
 logging-projectweek.xml
+target/
+.classpath
+.project

@@ -149,7 +149,7 @@ class ConfiguredDataSource implements DataSource {
 
     static DataSource getPostgresDataSource(AppConfiguration config, String propertyPrefix) {
         ConfiguredDataSource dataSource = new ConfiguredDataSource(config, propertyPrefix);
-        dataSource.setDefaultUsername(propertyPrefix + "user");
+        dataSource.setDefaultUsername(propertyPrefix);
         dataSource.setDefaultUrl("jdbc:postgresql://localhost:5432/" + propertyPrefix);
         dataSource.setDefaultDriver("org.postgresql.Driver");
         return dataSource;

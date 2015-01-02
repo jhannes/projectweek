@@ -3,12 +3,7 @@ package com.johannesbrodwall.infrastructure.webserver;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.MovedContextHandler;
-import org.eclipse.jetty.server.handler.ShutdownHandler;
-import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.webapp.WebInfConfiguration;
-import org.eclipse.jetty.webapp.WebXmlConfiguration;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
@@ -61,36 +56,22 @@ public class WebServer {
         webapp.setContextPath(contextPath);
 
         URL webAppUrl = getClass().getResource("/webapp");
-        if (webAppUrl.getProtocol().equals("jar")) {
-            webapp.setWar(webAppUrl.toExternalForm());
-        } else {
-            webapp.setWar("src/main/resources/webapp");
+        if (webAppUrl.getProtocol().equals("file")) {
             // Avoid locking static content when running exploded
+            webapp.setWar("src/main/resources/webapp");
             webapp.setInitParameter("org.eclipse.jetty.servlet.Default.useFileMappedBuffer", "false");
+        } else {
+            webapp.setWar(webAppUrl.toExternalForm());
         }
-        webapp.setConfigurations(new Configuration[] {
-                new WebInfConfiguration(), new WebXmlConfiguration(),
-        });
         return webapp;
     }
 
-    protected ShutdownHandler shutdownHandler() {
-        return new ShutdownHandler("sdgsdgs", false, true);
-    }
-
-    protected Handler createRedirectContextHandler(String contextPath, String server) {
-        MovedContextHandler contextHandler = new MovedContextHandler();
-        contextHandler.setContextPath(contextPath);
-        contextHandler.setNewContextURL(server);
-        return contextHandler;
-    }
-
-    public static void setupLogin(String logConfig) throws JoranException {
+    public static void setupLogging(String logConfig) throws JoranException {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
-    
+
         extractConfiguration(logConfig);
-    
+
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.reset();
         JoranConfigurator configurator = new JoranConfigurator();
